@@ -15,6 +15,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.Statement;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class DbWriteTester extends AbstractActor {
     private static final Logger LOGGER = LoggerFactory.getLogger(DbWriteTester.class);
@@ -45,6 +46,14 @@ public class DbWriteTester extends AbstractActor {
         LOGGER.info("DbWriteTester {} starting", System.currentTimeMillis());
         final Config configurations = ActorHandler.getInstance().getConfig().getConfig("configurations");
         sqls = configurations.getStringList("writeSqls");
+
+        getContext().system().scheduler().schedule(
+                scala.concurrent.duration.Duration.create(0, TimeUnit.SECONDS),
+                scala.concurrent.duration.Duration.create(10, TimeUnit.MILLISECONDS),
+                self(),
+                "test",
+                getContext().dispatcher(),
+                ActorRef.noSender());
     }
 
     @Override
@@ -55,17 +64,15 @@ public class DbWriteTester extends AbstractActor {
 
     private void work() throws Exception {
         int len = sqls.size();
-        while (true) {
-            for (int i = 0; i < len; i++) {
-                String sql = sqls.get(i);
-                long t0=System.currentTimeMillis();
-                try (Connection conn = DriverManager.getConnection(url, user, pwd)) {
-                    try (Statement stat = conn.createStatement()) {
-                        long t1 = System.currentTimeMillis();
-                        Boolean r = stat.execute(sql);
-                        long t = System.currentTimeMillis();
-                        System.out.println((t1-t0)+"|"+(t-t1)+"|"+sql);
-                    }
+        for (int i = 0; i < len; i++) {
+            String sql = sqls.get(i);
+            long t0 = System.currentTimeMillis();
+            try (Connection conn = DriverManager.getConnection(url, user, pwd)) {
+                try (Statement stat = conn.createStatement()) {
+                    long t1 = System.currentTimeMillis();
+                    Boolean r = stat.execute(sql);
+                    long t = System.currentTimeMillis();
+                    System.out.println((t1 - t0) + "|" + (t - t1) + "|" + sql);
                 }
             }
         }
@@ -74,11 +81,11 @@ public class DbWriteTester extends AbstractActor {
     @Override
     public Receive createReceive() {
         return receiveBuilder()
-                .matchEquals("start", s -> {
+                .matchEquals("test", s -> {
                     work();
                 })
                 .matchEquals("stop", s -> {
-
+                    getContext().stop(getSelf());
                 })
                 .matchAny(o -> LOGGER.info("Received unknown message"))
                 .build();
