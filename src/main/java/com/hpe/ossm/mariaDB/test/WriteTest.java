@@ -25,7 +25,7 @@ public class WriteTest {
 //            System.out.println(url+"|"+ocNum+"|"+alarmNum);
 
             ActorRef r = actorSystem.actorOf(DbWriteTester.props(url,user,pwd));
-            r.tell("start",ActorRef.noSender());
+//            r.tell("start",ActorRef.noSender());
 
         } catch (Exception e) {
             System.out.println("Error: "+ e.getMessage());

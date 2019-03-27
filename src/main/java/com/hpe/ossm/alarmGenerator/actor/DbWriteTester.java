@@ -26,6 +26,7 @@ public class DbWriteTester extends AbstractActor {
     private final String user;
     private final String pwd;
     private List<String> sqls = null;
+    private int index = 0;
 
     private DbWriteTester(String url, String user, String pwd) {
         super();
@@ -63,17 +64,19 @@ public class DbWriteTester extends AbstractActor {
     }
 
     private void work() throws Exception {
+        String sql = sqls.get(index);
+        index=index+1;
         int len = sqls.size();
-        for (int i = 0; i < len; i++) {
-            String sql = sqls.get(i);
-            long t0 = System.currentTimeMillis();
-            try (Connection conn = DriverManager.getConnection(url, user, pwd)) {
-                try (Statement stat = conn.createStatement()) {
-                    long t1 = System.currentTimeMillis();
-                    Boolean r = stat.execute(sql);
-                    long t = System.currentTimeMillis();
-                    System.out.println((t1 - t0) + "|" + (t - t1) + "|" + sql);
-                }
+        if(index>=len){
+            index=0;
+        }
+        long t0 = System.currentTimeMillis();
+        try (Connection conn = DriverManager.getConnection(url, user, pwd)) {
+            try (Statement stat = conn.createStatement()) {
+                long t1 = System.currentTimeMillis();
+                Boolean r = stat.execute(sql);
+                long t = System.currentTimeMillis();
+                LOGGER.info((t1 - t0) + "|" + (t - t1) + "|" + sql);
             }
         }
     }
@@ -82,7 +85,12 @@ public class DbWriteTester extends AbstractActor {
     public Receive createReceive() {
         return receiveBuilder()
                 .matchEquals("test", s -> {
-                    work();
+                    try{
+                        work();
+                    }catch(Exception e){
+                        LOGGER.error(e.getMessage());
+                        ActorHandler.shutdownSystem();
+                    }
                 })
                 .matchEquals("stop", s -> {
                     getContext().stop(getSelf());

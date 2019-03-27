@@ -49,7 +49,7 @@ public class DBQuery extends AbstractActor {
 
         getContext().system().scheduler().schedule(
                 scala.concurrent.duration.Duration.create(0, TimeUnit.SECONDS),
-                scala.concurrent.duration.Duration.create(10, TimeUnit.SECONDS),
+                scala.concurrent.duration.Duration.create(5, TimeUnit.SECONDS),
                 self(),
                 "test",
                 getContext().dispatcher(),
