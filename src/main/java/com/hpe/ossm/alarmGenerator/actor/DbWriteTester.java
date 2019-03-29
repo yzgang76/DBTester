@@ -27,6 +27,8 @@ public class DbWriteTester extends AbstractActor {
     private final String pwd;
     private List<String> sqls = null;
     private int index = 0;
+    private int count=0;
+    private long TS0;
 
     private DbWriteTester(String url, String user, String pwd) {
         super();
@@ -64,6 +66,16 @@ public class DbWriteTester extends AbstractActor {
     }
 
     private void work() throws Exception {
+        if(count==0){
+            TS0=System.currentTimeMillis();
+//            System.out.println("sssssssssssssss"+TS0);
+        }
+        if(count==100){
+            LOGGER.info("execute 100 operations, cost "+ (System.currentTimeMillis()-TS0));
+            count=0;
+        }else{
+            count++;
+        }
         String sql = sqls.get(index);
         index=index+1;
         int len = sqls.size();
@@ -76,7 +88,7 @@ public class DbWriteTester extends AbstractActor {
                 long t1 = System.currentTimeMillis();
                 Boolean r = stat.execute(sql);
                 long t = System.currentTimeMillis();
-                LOGGER.info((t1 - t0) + "|" + (t - t1) + "|" + sql);
+                LOGGER.info( count+":"+index+" - "+(t1 - t0) + "|" + (t - t1));
             }
         }
     }
@@ -89,7 +101,7 @@ public class DbWriteTester extends AbstractActor {
                         work();
                     }catch(Exception e){
                         LOGGER.error(e.getMessage());
-                        ActorHandler.shutdownSystem();
+//                        ActorHandler.shutdownSystem();
                     }
                 })
                 .matchEquals("stop", s -> {
