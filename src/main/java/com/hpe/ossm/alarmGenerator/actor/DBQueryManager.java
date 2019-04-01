@@ -14,6 +14,7 @@ import akka.util.ByteString;
 import com.hpe.ossm.alarmGenerator.ActorHandler;
 import com.hpe.ossm.alarmGenerator.messages.QueryStatistics;
 import com.typesafe.config.Config;
+import org.h2.jdbcx.JdbcConnectionPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,7 +39,7 @@ public class DBQueryManager extends AbstractActor {
     private final String logFile = "mariaDB-test-" + System.currentTimeMillis();
     //    private final DateTimeFormatter format = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private final transient Materializer materializer = ActorMaterializer.create(getContext());
-
+    private final JdbcConnectionPool cp;
 
     private final Config configurations = ActorHandler.getInstance().getConfig().getConfig("configurations");
     private final String tableName=configurations.getString("tableName");
@@ -86,6 +87,13 @@ public class DBQueryManager extends AbstractActor {
         } catch (Exception e) {
             LOGGER.error("FilePersistentActor Exception : " + e);
             getContext().stop(getSelf());
+        }
+
+        System.out.println("url: "+url);
+        if(url.contains("h2")){
+            this.cp= JdbcConnectionPool.create(url,user,pwd);
+        }else{
+            this.cp=null;
         }
     }
 
@@ -137,7 +145,7 @@ public class DBQueryManager extends AbstractActor {
         LOGGER.info("DBQueryManager {} starting", numberOfTester);
 
         for (int i = 0; i < numberOfTester; i++) {
-            ActorRef r = getContext().actorOf(DBQuery.props(i, url, user, pwd, getSql(i), getSelf()));
+            ActorRef r = getContext().actorOf(DBQuery.props(i, url, user, pwd, getSql(i), getSelf(),cp).withDispatcher("q-dispatcher"));
         }
     }
 

@@ -1,31 +1,14 @@
 package com.hpe.ossm.alarmGenerator.actor;
 
-import akka.Done;
 import akka.actor.AbstractActor;
 import akka.actor.ActorRef;
 import akka.actor.Props;
-import akka.japi.function.Creator;
-import akka.japi.function.Function;
-import akka.stream.ActorMaterializer;
-import akka.stream.Materializer;
-import akka.stream.alpakka.file.javadsl.LogRotatorSink;
-import akka.stream.javadsl.Source;
-import akka.util.ByteString;
 import com.hpe.ossm.alarmGenerator.ActorHandler;
-import com.hpe.ossm.alarmGenerator.messages.QueryStatistics;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigObject;
+import org.h2.jdbcx.JdbcConnectionPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.File;
-import java.nio.file.FileSystems;
-import java.nio.file.Path;
-import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.CompletionStage;
 
 public class ViewMockup extends AbstractActor {
     private static final Logger LOGGER = LoggerFactory.getLogger(ViewMockup.class);
@@ -42,6 +25,7 @@ public class ViewMockup extends AbstractActor {
     private final String url = configurations.getString("url");
     private final String user = configurations.getString("user");
     private final String pwd = configurations.getString("pwd");
+    private final JdbcConnectionPool cp;
 //    private final int testerNum = configurations.getInt("numOfTester");
     private final ConfigObject view = configurations.getObject("viewSqls");
 //    private final String path = configurations.getString("logPath");
@@ -68,6 +52,12 @@ public class ViewMockup extends AbstractActor {
         super();
         this.id=id;
         this.recorder=recorder;
+        System.out.println("url: "+url);
+        if(url.contains("h2")){
+            this.cp=JdbcConnectionPool.create(url,user,pwd);
+        }else{
+            this.cp=null;
+        }
 //        try {
 //            if (null != path) {  //path is directory
 //                File file = new File(path);
@@ -98,14 +88,14 @@ public class ViewMockup extends AbstractActor {
 
         if(null!=view){
             view.toConfig().getStringList("statistics").forEach(s->
-                    getContext().actorOf(DBQuery.props(id, url, user, pwd, s, recorder))
+                    getContext().actorOf(DBQuery.props(id, url, user, pwd, s, recorder,cp).withDispatcher("q-dispatcher"))
             );
             view.toConfig().getStringList("dc").forEach(s->
-                    getContext().actorOf(DBQuery.props(id, url, user, pwd, s, recorder))
+                    getContext().actorOf(DBQuery.props(id, url, user, pwd, s, recorder,cp).withDispatcher("q-dispatcher"))
             );
             view.toConfig().getList("alarm").forEach(l->{
                 l.atPath("0").getList("0").atPath("0").getStringList("0").forEach(s->
-                    getContext().actorOf(DBQuery.props(id, url, user, pwd, s, recorder))
+                    getContext().actorOf(DBQuery.props(id, url, user, pwd, s, recorder,cp).withDispatcher("q-dispatcher"))
                 );
             });
         }
@@ -115,6 +105,9 @@ public class ViewMockup extends AbstractActor {
     public void postStop() {
 //        System.out.println("DBQueryManager stopping " );
         LOGGER.info("ViewMockup stopping");
+        if(null!=cp){
+            cp.dispose();
+        }
     }
 
 //    private final transient Creator<Function<ByteString, Optional<Path>>> timeBasedPathCreator =

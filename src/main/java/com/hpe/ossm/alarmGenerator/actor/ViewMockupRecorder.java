@@ -47,7 +47,7 @@ public class ViewMockupRecorder extends AbstractActor {
                 this.destinationDir = FileSystems.getDefault().getPath(path);
             }
             LOGGER.info("Log File: " + destinationDir + "/" + logFile);
-            printCollections("Record Time" + " | " + "User ID" + " | " + "Time to get Connection" + " | " + "Time of Query" + " | " + "SQL" + "\n");
+            printCollections("Record Time|ts|Mail Box Size|Sub Count|User ID|Time to get Connection|Time of Query|SQL\n");
         } catch (Exception e) {
             LOGGER.error("FilePersistentActor Exception : " + e);
             getContext().stop(getSelf());
@@ -96,9 +96,9 @@ public class ViewMockupRecorder extends AbstractActor {
     public Receive createReceive() {
         return receiveBuilder()
                 .match(QueryStatistics.class, c -> {
-
-                    printCollections(LocalDateTime.now() + " | " + c.getId() + " | " + c.getCost_a() + " | " + c.getCost_q() + " | " + c.getSql() + "\n");
-//                    numOfRecord++;
+                    LOGGER.info(">>>>>>>>"+c.getSize() + " | " +c.getCount() + " | " + c.getId() +"|"+ (c.getCost_a()+c.getCost_q()) + " | " + c.getSql());
+                    printCollections(LocalDateTime.now() + " | " +c.getTs()+ " | " +c.getSize() + " | " +c.getCount()+ " | " + c.getId() + " | " + c.getCost_a() + " | " + c.getCost_q() + " | " + c.getSql() + "\n");
+                    numOfRecord=numOfRecord+1;
 //                    if (numOfRecord > numberOfMaxRecord) {
 //                        Thread.sleep(2500);
 //                        ActorHandler.shutdownSystem();
