@@ -3,7 +3,9 @@ package com.hpe.ossm.alarmGenerator.actor;
 import akka.actor.AbstractActor;
 import akka.actor.ActorRef;
 import akka.actor.Props;
+import com.hpe.ossm.alarmGenerator.ActorHandler;
 import com.hpe.ossm.alarmGenerator.messages.QueryStatistics;
+import com.typesafe.config.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,9 +23,10 @@ public class DBQuery extends AbstractActor {
     private final String sql;
     private final ActorRef manager;
     private int id;
-//    private transient Connection conn;
-    private int count=0;
-
+    private transient int count=0;
+    private transient long T;
+    private final Config configurations = ActorHandler.getInstance().getConfig().getConfig("configurations");
+    private final int interval=configurations.getInt("queryInterval");
     private DBQuery(int id,String url, String user, String pwd,String sql,ActorRef manager) {
         super();
         this.id=id;
@@ -46,10 +49,10 @@ public class DBQuery extends AbstractActor {
 //        } catch (Exception e) {
 //            LOGGER.error("Failed to create the connection to DB. " + e);
 //        }
-
+        T=System.currentTimeMillis();
         getContext().system().scheduler().schedule(
                 scala.concurrent.duration.Duration.create(0, TimeUnit.SECONDS),
-                scala.concurrent.duration.Duration.create(5, TimeUnit.SECONDS),
+                scala.concurrent.duration.Duration.create(interval, TimeUnit.SECONDS),
                 self(),
                 "test",
                 getContext().dispatcher(),
@@ -59,7 +62,7 @@ public class DBQuery extends AbstractActor {
     @Override
     public void postStop() {
 //        System.out.println("DBQuery stopping " + sql);
-        LOGGER.info("DBQuery {} stopping", sql, System.currentTimeMillis());
+        LOGGER.info("DBQuery {} stopping", sql);
 //        if (null != conn) {
 //            try {
 //                conn.close();
@@ -72,7 +75,7 @@ public class DBQuery extends AbstractActor {
         long t0=System.currentTimeMillis();
         try(Connection conn = DriverManager.getConnection(url, user, pwd)){
             try(Statement stat = conn.createStatement()){
-                count++;
+                count=count+1;
                 long t1=System.currentTimeMillis();
                 try(ResultSet rs=stat.executeQuery(sql)){
                     long t=System.currentTimeMillis();
@@ -86,6 +89,8 @@ public class DBQuery extends AbstractActor {
 //                    }
 
                     manager.tell(new QueryStatistics(id,sql,t1-t0,t-t1),ActorRef.noSender());
+
+                    LOGGER.info(((System.currentTimeMillis()-T)/interval/1000)+":"+count + ": [" + id + "]" + " | " + (t1-t0) + " | " + (t-t1) + " | " + sql);
                 }
             }
         }

@@ -4,6 +4,8 @@ import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import com.hpe.ossm.alarmGenerator.ActorHandler;
 import com.hpe.ossm.alarmGenerator.actor.DBQueryManager;
+import com.hpe.ossm.alarmGenerator.actor.ViewMockup;
+import com.hpe.ossm.alarmGenerator.actor.ViewMockupRecorder;
 import com.typesafe.config.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,13 +24,22 @@ public class FeatureTest {
             final int testerNum=configurations.getInt("numOfTester");
             final int ocNum=configurations.getInt("numOfOC");
             final int mr=configurations.getInt("maxRecord");
+            final int nViews=configurations.getInt("numberOfViews");
 //            final int ocNum=configurations.getInt("numOfOC");
 //            final int alarmNum=configurations.getInt("numOfAlarmPerOC");
 
 
 //            System.out.println(url+"|"+ocNum+"|"+alarmNum);
+            final Boolean singleTest=configurations.getBoolean("singleTest");
+            if(singleTest){
+                ActorRef r = actorSystem.actorOf(DBQueryManager.props(url,user,pwd,testerNum,logPath,ocNum,mr));
+            }else{
+                ActorRef r = actorSystem.actorOf(ViewMockupRecorder.props());
+                for(int i=0;i<nViews;i++){
+                    actorSystem.actorOf(ViewMockup.props(i,r));
+                }
+            }
 
-            ActorRef r = actorSystem.actorOf(DBQueryManager.props(url,user,pwd,testerNum,logPath,ocNum,mr));
 
         } catch (Exception e) {
             System.out.println("Error: "+ e.getMessage());
