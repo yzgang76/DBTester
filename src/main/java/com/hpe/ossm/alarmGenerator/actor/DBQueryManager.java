@@ -89,12 +89,13 @@ public class DBQueryManager extends AbstractActor {
             getContext().stop(getSelf());
         }
 
-        System.out.println("url: "+url);
+//        System.out.println("url: "+url);
         if(url.contains("h2")){
             this.cp= JdbcConnectionPool.create(url,user,pwd);
         }else{
             this.cp=null;
         }
+//        cp=null;
     }
 
     public static Props props(String url, String user, String pwd, int n, String destinationDir, int numberOfOC, int mr) {

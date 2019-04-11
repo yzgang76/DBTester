@@ -112,7 +112,7 @@ public class AlarmGenerator {
                     }
                 }
             for(int i=1;i<=ocNum;i++){
-                ActorRef r = actorSystem.actorOf(DbWorker.props("perf_oc"+i, alarmNum,url,user,pwd));
+                ActorRef r = actorSystem.actorOf(DbWorker.props("perf_oc"+i, alarmNum,url,user,pwd).withDispatcher("q-dispatcher"));
                 r.tell("start",ActorRef.noSender());
             }
 

@@ -30,7 +30,7 @@ public class FeatureTest {
 
 
 //            System.out.println(url+"|"+ocNum+"|"+alarmNum);
-            final Boolean singleTest=configurations.getBoolean("singleTest");
+            final boolean singleTest=configurations.getBoolean("singleTest");
             if(singleTest){
                 ActorRef r = actorSystem.actorOf(DBQueryManager.props(url,user,pwd,testerNum,logPath,ocNum,mr));
             }else{
