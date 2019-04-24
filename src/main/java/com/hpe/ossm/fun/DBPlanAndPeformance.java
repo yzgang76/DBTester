@@ -15,7 +15,6 @@ public class DBPlanAndPeformance {
         String planSql;
         HashMap<String, Serializable>res=new HashMap<>();
         if(url.contains("h2")){
-            System.out.println("ssssssss");
             planSql="explain analyze "+ sql;
         }else{
             planSql="explain partitions "+ sql;
@@ -35,6 +34,35 @@ public class DBPlanAndPeformance {
         }
         return res;
     }
+
+    private static HashMap<String , Serializable> getPerformance(String url, String user, String pwd, String sql) throws  NullPointerException, SQLException{
+        HashMap<String, Serializable>res=new HashMap<>();
+        try (Connection conn = DriverManager.getConnection(url, user, pwd)) {
+            try (Statement stat = conn.createStatement()) {
+                long T=0;
+                long Max=0;
+                long Min=9999999999999l;
+                for(int i=0;i<5;i++){
+                    long t=System.currentTimeMillis();
+                    try (ResultSet rs = stat.executeQuery(sql)) {
+                        long t1=System.currentTimeMillis()-t;
+                       T=T+t1;
+                       if(t1>Max){
+                           Max=t1;
+                       }
+                       if(t1<Min){
+                           Min=t1;
+                       }
+                    }
+                }
+                res.put("avg",T/5f);
+                res.put("max",Max);
+                res.put("min",Min);
+            }
+        }
+        return res;
+    }
+
     public static void main(String[] args) throws Exception {
 
 //        String url="jdbc:h2:tcp://localhost/mem:test;DB_CLOSE_DELAY=-1;MULTI_THREADED=1;LOCK_MODE=3;LOG=0;UNDO_LOG=0";

@@ -98,7 +98,7 @@ public class DBQuery extends AbstractActor {
         long t1, t;
         if (cp == null) {
             try (Connection conn = DriverManager.getConnection(url, user, pwd)) {
-                LOGGER.info(id + "++++++++++++++++++++" + (null != conn));
+//                LOGGER.info(id + "++++++++++++++++++++" + (null != conn));
                 try (Statement stat = conn.createStatement()) {
                     count = count + 1;
                     t1 = System.currentTimeMillis();
@@ -128,7 +128,7 @@ public class DBQuery extends AbstractActor {
             }
         } else {
             try (Connection conn = cp.getConnection()) {
-                LOGGER.info(id + "++++++cp++++++++++++++" + (null != conn));
+//                LOGGER.info(id + "++++++cp++++++++++++++" + (null != conn));
                 try (Statement stat = conn.createStatement()) {
                     count = count + 1;
                     t1 = System.currentTimeMillis();
@@ -144,7 +144,7 @@ public class DBQuery extends AbstractActor {
                     }
                 }
             }
-            LOGGER.info(id + "------------cp-----------" + (System.currentTimeMillis() - t));
+//            LOGGER.info(id + "------------cp-----------" + (System.currentTimeMillis() - t));
         }
     }
 

@@ -91,7 +91,8 @@ public class DBQueryManager extends AbstractActor {
 
 //        System.out.println("url: "+url);
         if(url.contains("h2")){
-            this.cp= JdbcConnectionPool.create(url,user,pwd);
+//            this.cp= JdbcConnectionPool.create(url,user,pwd);
+            this.cp=null;
         }else{
             this.cp=null;
         }
