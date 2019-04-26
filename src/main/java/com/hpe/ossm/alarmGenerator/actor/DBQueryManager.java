@@ -41,6 +41,10 @@ public class DBQueryManager extends AbstractActor {
     private final transient Materializer materializer = ActorMaterializer.create(getContext());
     private final JdbcConnectionPool cp;
 
+    private double queryCostTotal=0d;
+    private int    queryCount=0;
+
+
     private final Config configurations = ActorHandler.getInstance().getConfig().getConfig("configurations");
     private final String tableName=configurations.getString("tableName");
     private final boolean useSql=configurations.getBoolean("useSQL");
@@ -154,7 +158,7 @@ public class DBQueryManager extends AbstractActor {
     @Override
     public void postStop() {
 //        System.out.println("DBQueryManager stopping " );
-        LOGGER.info("DBQueryManager stopping");
+        LOGGER.info("DBQueryManager stopping. Average cost: " + (queryCostTotal/queryCount));
     }
 
     private final transient Creator<Function<ByteString, Optional<Path>>> timeBasedPathCreator =
@@ -185,6 +189,8 @@ public class DBQueryManager extends AbstractActor {
                         ActorHandler.shutdownSystem();
                     }else{
                         LOGGER.info(numOfRecord + ": [" + c.getId() + "]" + " | " + c.getCost_a() + " | " + c.getCost_q() + " | " + c.getSql());
+                        queryCostTotal = queryCostTotal+c.getCost_q();
+                        queryCount=queryCount+1;
                         printCollections(LocalDateTime.now() + " | " + c.getId() + " | " + c.getCost_a() + " | " + c.getCost_q() + " | " + c.getSql() + "\n");
                     }
                 })

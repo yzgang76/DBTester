@@ -115,7 +115,7 @@ public class DBQuery extends AbstractActor {
 
                         manager.tell(new QueryStatistics(id, sql, t1 - t0, t - t1, ((System.currentTimeMillis() - T) / interval / 1000), count, LocalDateTime.now()), ActorRef.noSender());
 
-                        LOGGER.info(((System.currentTimeMillis() - T) / interval / 1000) + ":" + count + ": [" + id + "]" + " | " + (t1 - t0) + " | " + (t - t1) + " | " + sql);
+//                        LOGGER.info(((System.currentTimeMillis() - T) / interval / 1000) + ":" + count + ": [" + id + "]" + " | " + (t1 - t0) + " | " + (t - t1) + " | " + sql);
 
                         if (stopSelf > 0) {
                             if (count >= stopSelf) {
@@ -124,7 +124,7 @@ public class DBQuery extends AbstractActor {
                         }
                     }
                 }
-                LOGGER.info(id + "-----------------------" + (System.currentTimeMillis() - t));
+//                LOGGER.info(id + "-----------------------" + (System.currentTimeMillis() - t));
             }
         } else {
             try (Connection conn = cp.getConnection()) {

@@ -1,6 +1,7 @@
 package com.hpe.ossm.alarmGenerator.actor;
 
 import akka.actor.AbstractActor;
+import akka.actor.ActorRef;
 import akka.actor.Props;
 import com.hpe.ossm.alarmGenerator.generator.TemipAlarm;
 import org.slf4j.Logger;
@@ -23,25 +24,26 @@ public class DbWorker extends AbstractActor {
     private transient Connection conn;
     private int counter = 0;
     private final TemipAlarm t = new TemipAlarm();
+    private final ActorRef manager;
 
-
-    private DbWorker(String oc, int num, String url, String user, String pwd) {
+    private DbWorker(String oc, int num, String url, String user, String pwd,ActorRef manager) {
         super();
         this.oc = oc;
         this.num = num;
         this.url = url;
         this.user = user;
         this.pwd = pwd;
+        this.manager=manager;
     }
 
-    public static Props props(String oc, int num, String url, String user, String pwd) {
-        return Props.create(DbWorker.class, () -> new DbWorker(oc, num, url, user, pwd));
+    public static Props props(String oc, int num, String url, String user, String pwd,ActorRef manager) {
+        return Props.create(DbWorker.class, () -> new DbWorker(oc, num, url, user, pwd,manager));
     }
 
     @Override
     public void preStart() {
 //        System.out.println("DbWorker starting " + oc);
-        LOGGER.info("DbWorker {} starting", oc, System.currentTimeMillis());
+        LOGGER.info("DbWorker {} starting", oc);
         try {
             conn = DriverManager.getConnection(url, user, pwd);
         } catch (Exception e) {
@@ -52,7 +54,7 @@ public class DbWorker extends AbstractActor {
     @Override
     public void postStop() {
 //        System.out.println("DbWorker stopping " + oc);
-        LOGGER.info("DbWorker {} stopping", oc, System.currentTimeMillis());
+        LOGGER.info("DbWorker {} stopping", oc);
         if (null != conn) {
             try {
                 conn.close();
@@ -60,6 +62,7 @@ public class DbWorker extends AbstractActor {
                 LOGGER.error("DB Error:" + e.getMessage());
             }
         }
+        manager.tell("stopped",getSelf());
     }
 
     private void work() {

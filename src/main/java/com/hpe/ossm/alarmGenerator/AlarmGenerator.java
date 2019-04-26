@@ -1,12 +1,9 @@
 package com.hpe.ossm.alarmGenerator;
 
 
-import akka.actor.PoisonPill;
-import com.hpe.ossm.alarmGenerator.actor.DbWorker;
-import com.hpe.ossm.alarmGenerator.messages.QueryStatistics;
+import com.hpe.ossm.alarmGenerator.actor.DBWorkerManager;
 import com.typesafe.config.Config;
 
-import akka.actor.ActorRef;
 
 import akka.actor.ActorSystem;
 import org.slf4j.Logger;
@@ -14,26 +11,26 @@ import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.sql.ResultSet;
 import java.sql.Statement;
-import java.time.LocalDateTime;
 
 public class AlarmGenerator {
     private static final Logger LOGGER = LoggerFactory.getLogger(AlarmGenerator.class);
 
-    public static void main(String[] args) throws Exception{
+    public static void main(String[] args) {
         try {
 
             final ActorSystem actorSystem = ActorHandler.getInstance().getActorSystem();
             final Config configurations = ActorHandler.getInstance().getConfig().getConfig("configurations");
-            final String url=configurations.getString("url");
-            final String user=configurations.getString("user");
-            final String pwd=configurations.getString("pwd");
-            final int ocNum=configurations.getInt("numOfOC");
-            final int alarmNum=configurations.getInt("numOfAlarmPerOC");
-            final String tableName=configurations.getString("tableName");
-            final String sql="CREATE  TABLE if not exists\n" +
-                    "    "+tableName+"\n" +
+            final String url = configurations.getString("url");
+            final String user = configurations.getString("user");
+            final String pwd = configurations.getString("pwd");
+            final int ocNum = configurations.getInt("numOfOC");
+            final int alarmNum = configurations.getInt("numOfAlarmPerOC");
+            final String tableName = configurations.getString("tableName");
+
+            //create table if not exists
+            final String sql = "CREATE  TABLE if not exists\n" +
+                    "    " + tableName + "\n" +
                     "    (\n" +
                     "        _KEY VARCHAR(255) NOT NULL,\n" +
                     "        _TIMESTAMP BIGINT,\n" +
@@ -100,25 +97,25 @@ public class AlarmGenerator {
                     "        TECHNOLOGYDOMAIN VARCHAR(255),\n" +
                     "        PRIMARY KEY (_KEY)\n" +
                     "    );\n";
-            System.out.println(url+"|"+ocNum+"|"+alarmNum);
-            try(Connection conn = DriverManager.getConnection(url, user, pwd)){
+            System.out.println(url + "|" + ocNum + "|" + alarmNum);
+            try (Connection conn = DriverManager.getConnection(url, user, pwd)) {
                 LOGGER.info("try to create table");
-                try(Statement stat = conn.createStatement()){
-                        try{
-                            stat.execute(sql);
-                        }catch(Exception e) {
-                            LOGGER.error(e.getMessage());
-                        }
+                try (Statement stat = conn.createStatement()) {
+                    try {
+                        stat.execute(sql);
+                        stat.execute("truncate table "+tableName);
+                    } catch (Exception e) {
+                        LOGGER.error(e.getMessage());
                     }
                 }
-            for(int i=1;i<=ocNum;i++){
-                ActorRef r = actorSystem.actorOf(DbWorker.props("perf_oc"+i, alarmNum,url,user,pwd).withDispatcher("q-dispatcher"));
-                r.tell("start",ActorRef.noSender());
             }
 
+            //start worker manager actor
+            actorSystem.actorOf(DBWorkerManager.props());
+
         } catch (Exception e) {
-            System.out.println("Error: "+ e.getMessage());
-            LOGGER.error("Error: "+ e.getMessage());
+            System.out.println("Error: " + e.getMessage());
+            LOGGER.error("Error: " + e.getMessage());
             System.exit(-1);
         }
     }
