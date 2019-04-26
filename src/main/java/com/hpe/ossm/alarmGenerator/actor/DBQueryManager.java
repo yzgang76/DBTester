@@ -133,6 +133,8 @@ public class DBQueryManager extends AbstractActor {
     private String getSql(int index) {
         if(useSql){
             return sql;
+        }else{
+            return "SELECT identifier FROM temip_alarm"+(index%5+1)+" WHERE state = 'Acknowledged' order by event_time desc, alarmIdentifier desc limit 0 ,500";
         }
 //        return sqls[index % sqls.length];
 //        return sqls[1];
@@ -142,7 +144,7 @@ public class DBQueryManager extends AbstractActor {
 //        return sqls2[index % 2];
 //        return " select * from "+tableName+" where state='Outstanding' and operation_context='dome_oc4' and additional_text like '%Minor%'";
 //        return " select * from "+tableName+" where state='Outstanding' and operation_context='dome_oc4' and match(additional_text) against ('%Minor%')";
-        return "SELECT identifier,sourceIdentifier,event_time,alarmIdentifier,perceived_severity,operation_context,managed_object,alarm_type,additional_text,probable_cause,state,problem_status,sa_total,operator_note,acknowledgement_timestamp,acknowledgement_user_identifier,alarm_origin,clearance_report_flag,creation_timestamp,domain,escalatedAlarm,last_modification_timestamp,original_event_time,original_severity,previous_state,problemOccurrences,problem_information,specific_problems,target_entities,user_text,target,notificationIdentifier,outageFlag,correlGroup,termination_user_identifier,termination_timestamp,closedBy,releaseUserIdentifier,releaseTimestamp,closeUserIdentifier,closeTimestamp,handledUserIdentifier,handleTimestamp,clearanceTimeStamp,uniqueid FROM "+tableName+" WHERE (state = 'Outstanding') ORDER BY  event_time DESC ,  alarmIdentifier DESC ,  identifier DESC LIMIT 0 , 500";
+//        return "SELECT identifier,sourceIdentifier,event_time,alarmIdentifier,perceived_severity,operation_context,managed_object,alarm_type,additional_text,probable_cause,state,problem_status,sa_total,operator_note,acknowledgement_timestamp,acknowledgement_user_identifier,alarm_origin,clearance_report_flag,creation_timestamp,domain,escalatedAlarm,last_modification_timestamp,original_event_time,original_severity,previous_state,problemOccurrences,problem_information,specific_problems,target_entities,user_text,target,notificationIdentifier,outageFlag,correlGroup,termination_user_identifier,termination_timestamp,closedBy,releaseUserIdentifier,releaseTimestamp,closeUserIdentifier,closeTimestamp,handledUserIdentifier,handleTimestamp,clearanceTimeStamp,uniqueid FROM "+tableName+" WHERE (state = 'Outstanding') ORDER BY  event_time DESC ,  alarmIdentifier DESC ,  identifier DESC LIMIT 0 , 500";
     }
 
     @Override
@@ -151,7 +153,7 @@ public class DBQueryManager extends AbstractActor {
         LOGGER.info("DBQueryManager {} starting", numberOfTester);
 
         for (int i = 0; i < numberOfTester; i++) {
-            ActorRef r = getContext().actorOf(DBQuery.props(i, url, user, pwd, getSql(i), getSelf(),cp).withDispatcher("q-dispatcher"));
+            getContext().actorOf(DBQuery.props(i, url, user, pwd, getSql(i), getSelf(),cp).withDispatcher("q-dispatcher"));
         }
     }
 
