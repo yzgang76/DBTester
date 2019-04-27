@@ -36,17 +36,17 @@ public class DBQueryManager extends AbstractActor {
     private final String user;
     private final String pwd;
     private transient Path destinationDir;
-    private final String logFile = "mariaDB-test-" + System.currentTimeMillis();
+    private transient String logFile;
     //    private final DateTimeFormatter format = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private final transient Materializer materializer = ActorMaterializer.create(getContext());
     private final JdbcConnectionPool cp;
 
     private double queryCostTotal=0d;
     private int    queryCount=0;
-
+    private boolean stopping=false;
 
     private final Config configurations = ActorHandler.getInstance().getConfig().getConfig("configurations");
-    private final String tableName=configurations.getString("tableName");
+//    private final String tableName=configurations.getString("tableName");
     private final boolean useSql=configurations.getBoolean("useSQL");
     private final String sql=configurations.getString("sql");
     private void printCollections(String content) {
@@ -75,6 +75,13 @@ public class DBQueryManager extends AbstractActor {
         this.numberOfTester = numberOfTester;
         this.numberOfOC = numberOfOC;
         this.numberOfMaxRecord = mr;
+        String s;
+        if(url.contains(("h2"))){
+            s="h2DB-test-";
+        }else{
+            s="mariaDB-test-";
+        }
+        logFile=  s+ System.currentTimeMillis();
         try {
             if (null != path) {  //path is directory
                 File file = new File(path);
@@ -186,7 +193,8 @@ public class DBQueryManager extends AbstractActor {
         return receiveBuilder()
                 .match(QueryStatistics.class, c -> {
                     numOfRecord++;
-                    if (numOfRecord > numberOfMaxRecord) {
+                    if (numOfRecord > numberOfMaxRecord && !stopping) {
+                        stopping=true;
                         Thread.sleep(2500);
                         ActorHandler.shutdownSystem();
                     }else{

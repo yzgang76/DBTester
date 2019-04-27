@@ -23,7 +23,7 @@ public class FeatureTest {
             final String logPath=configurations.getString("logPath");
             final int testerNum=configurations.getInt("numOfTester");
             final int ocNum=configurations.getInt("numOfOC");
-            final int mr=configurations.getInt("maxRecord");
+            final int mr=configurations.getInt("maxRecordPerTester")*testerNum;
             final int nViews=configurations.getInt("numberOfViews");
 //            final int ocNum=configurations.getInt("numOfOC");
 //            final int alarmNum=configurations.getInt("numOfAlarmPerOC");
