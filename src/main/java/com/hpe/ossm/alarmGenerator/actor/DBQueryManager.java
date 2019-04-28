@@ -141,7 +141,7 @@ public class DBQueryManager extends AbstractActor {
         if(useSql){
             return sql;
         }else{
-            return "SELECT identifier FROM temip_alarm"+(index%5+1)+" WHERE state = 'Acknowledged' order by event_time desc, alarmIdentifier desc limit 0 ,500";
+            return "SELECT identifier FROM temip_alarm"+(index%5+1)+" WHERE state = 'Acknowledged' and additional_text like '%Critical%' order by event_time desc, alarmIdentifier desc limit 0 ,500";
         }
 //        return sqls[index % sqls.length];
 //        return sqls[1];
@@ -193,7 +193,7 @@ public class DBQueryManager extends AbstractActor {
         return receiveBuilder()
                 .match(QueryStatistics.class, c -> {
                     numOfRecord++;
-                    if (numOfRecord > numberOfMaxRecord && !stopping) {
+                    if (numOfRecord >=numberOfMaxRecord && !stopping) {
                         stopping=true;
                         Thread.sleep(2500);
                         ActorHandler.shutdownSystem();

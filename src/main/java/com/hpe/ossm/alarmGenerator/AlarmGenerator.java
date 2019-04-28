@@ -104,7 +104,7 @@ public class AlarmGenerator {
                     try {
                         stat.execute(sql);
                         stat.execute("truncate table "+tableName);
-                        stat.execute("Create index if not exists severity_index on temip_alarm(perceived_severity");
+                        stat.execute("Create index if not exists severity_index on temip_alarm(perceived_severity)");
                         stat.execute("Create index if not exists event_time_index on temip_alarm(event_time)");
                         stat.execute("Create index if not exists  alarm_identifier_index on temip_alarm(alarmidentifier)");
                         stat.execute("Create index if not exists  alarm_state_index on temip_alarm(`state`)");
