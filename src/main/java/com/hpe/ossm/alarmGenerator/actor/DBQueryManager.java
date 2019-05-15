@@ -141,7 +141,7 @@ public class DBQueryManager extends AbstractActor {
         if(useSql){
             return sql;
         }else{
-            return "SELECT identifier FROM temip_alarm"+(index%5+1)+" WHERE state = 'Acknowledged' and additional_text like '%Critical%' order by event_time desc, alarmIdentifier desc limit 0 ,500";
+            return "SELECT identifier FROM temip_alarm"+(index%5+1)+" WHERE state = 'Outstanding' and additional_text like '%Critical%' order by event_time desc, alarmIdentifier desc limit 0 ,500";
         }
 //        return sqls[index % sqls.length];
 //        return sqls[1];
